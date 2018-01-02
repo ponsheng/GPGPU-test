@@ -111,11 +111,7 @@ int main(int argc, char const *argv[])
             printf("%s\n", log);
         }
     }
-//TODO
 	kernel = clCreateKernel(program, "histogram", &err);
-
-// https://github.com/Dakkers/OpenCL-examples/blob/master/example02/main.c
-
 
 	unsigned int histogram_results[256 * 3];
 	unsigned int i=0, a, input_size;
@@ -136,20 +132,21 @@ int main(int argc, char const *argv[])
 	memset (histogram_results, 0x0, 256 * 3 * sizeof(unsigned int));
 
 /*********************************************************************************/
-    // TODO
     // Write buffer
 	cl_mem input, result;
-    input = clCreateBuffer(ctx, CL_MEM_READ_ONLY, input_size, NULL, NULL);
-    result = clCreateBuffer(ctx, CL_MEM_READ_WRITE, 256 * 3, NULL, NULL);
+    input = clCreateBuffer(ctx, CL_MEM_READ_ONLY, input_size * sizeof(unsigned int), NULL, NULL);
+    result = clCreateBuffer(ctx, CL_MEM_READ_WRITE, 256 * 3 * sizeof(unsigned int), NULL, NULL);
 
 	// Copy data
-    err = clEnqueueWriteBuffer(queue, input, CL_TRUE, 0, input_size, image, 0, NULL, NULL);
-    err = clEnqueueWriteBuffer(queue, result, CL_TRUE, 0, 256 * 3, histogram_results, 0, NULL, NULL);
+    err = clEnqueueWriteBuffer(queue, input, CL_TRUE, 0, input_size * sizeof(unsigned int), image, 0, NULL, NULL);
+    assert( err == CL_SUCCESS );
+    err = clEnqueueWriteBuffer(queue, result, CL_TRUE, 0, 256 * 3 * sizeof(unsigned int), histogram_results, 0, NULL, NULL);
+    assert( err == CL_SUCCESS );
     err = clFinish(queue);
     assert( err == CL_SUCCESS );
 
     size_t globalSize, localSize;
-    globalSize = 3;//input_size / 3;
+    globalSize = input_size / 3;
     localSize = 0;
 
 	// Run kernel
@@ -166,15 +163,17 @@ int main(int argc, char const *argv[])
     printf("Error: %d\n", err);
     assert( err == CL_SUCCESS );
 
+	histogram_results[2] = 948;
 
     //Read buffer
-	err = clEnqueueReadBuffer(queue, result, CL_TRUE, 0, 256 * 3, histogram_results, 0, NULL, NULL );
+    err = clEnqueueReadBuffer(queue, result, CL_TRUE, 0, 256 * 3 * sizeof(unsigned int), histogram_results, 0, NULL, NULL );
+    printf("Error: %d\n", err);
+    assert( err == CL_SUCCESS );
     err = clFinish(queue);
     printf("Error: %d\n", err);
     assert( err == CL_SUCCESS );
 
 /*****************************************************************************/
-
     for(unsigned int i = 0; i < 256 * 3; ++i) {
 		if (i % 256 == 0 && i != 0)
 			outFile << std::endl;
@@ -183,6 +182,13 @@ int main(int argc, char const *argv[])
 
 	inFile.close();
 	outFile.close();
+
+    clReleaseMemObject(input);
+    clReleaseMemObject(result);
+    clReleaseProgram(program);
+    clReleaseKernel(kernel);
+    clReleaseCommandQueue(queue);
+    clReleaseContext(ctx);
 
 	return 0;
 }
