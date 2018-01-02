@@ -14,7 +14,7 @@ for data in $dataset
 do
 
 echo -e "$GREEN$data"
-echo -e "$NC"
+echo -en "$NC"
 
 cat /home/data/OpenCL/input-$data  > input &
 ./histogram
