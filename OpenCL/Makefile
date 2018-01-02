@@ -12,4 +12,4 @@ check:
 	diff /home/data/OpenCL/ReferenceOutput/output-$(SIZE) 0656066.out
 
 clean:
-	rm -f histogram
+	rm -f histogram *.out  input output
